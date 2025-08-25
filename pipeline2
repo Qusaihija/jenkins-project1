@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Fetch Backup') {
+            steps {
+                copyArtifacts(
+                    projectName: 'DB1-Backup',
+                    selector: lastSuccessful(),
+								    target: './'
+                )
+            }
+        }
+
+        stage('Restore into DB2') {
+            steps {
+                sh '''
+                docker exec -i postgres-db2 psql -U admin -d schooldb < backup.sql
+                '''
+            }
+        }
+
+        stage('Verify Counts in DB2') {
+            steps {
+                sh '''
+                echo "Verifying row counts in DB2..."
+                docker exec postgres-db2 psql -U admin -d schooldb -c "SELECT 'students' AS table, COUNT(*) FROM students;"
+                docker exec postgres-db2 psql -U admin -d schooldb -c "SELECT 'schools' AS table, COUNT(*) FROM schools;"
+                '''
+            }
+        }
+    }
+}
+

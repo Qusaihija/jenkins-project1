@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Backup PostgreSQL DB1') {
+            steps {
+                sh '''
+                docker exec postgres-db1 pg_dump -U admin schooldb > backup.sql
+		if [ ! -f backup.sql ]; then
+		    echo "Backup failed!"
+		    exit 1
+  		fi
+                '''
+            }
+        }
+
+        stage('Verify Counts in DB1') {
+            steps {
+                sh '''
+                echo "Verifying row counts in DB1..."
+                docker exec postgres-db1 psql -U admin -d schooldb -c "SELECT 'students' AS table, COUNT(*) FROM students;"
+                docker exec postgres-db1 psql -U admin -d schooldb -c "SELECT 'schools' AS table, COUNT(*) FROM schools;"
+                '''
+            }
+        }
+
+        stage('Archive Backup') {
+            steps {
+                archiveArtifacts artifacts: 'backup.sql', followSymlinks: false
+            }
+        }
+    }
+}
