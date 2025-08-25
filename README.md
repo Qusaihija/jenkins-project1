@@ -8,7 +8,7 @@ This project sets up a Jenkins-based pipeline for backing up a PostgreSQL databa
 
 ## running the containers:
 ```
-docker build -t custom-jenkins .
+docker build -t jenkins-with-docker:jdk21 .
 
 docker run -d \
   --name jenkins-jdk21 \
